@@ -11,7 +11,7 @@ clean:
 	 
 
 dist:
-		rm -f dist
+		rm -fr dist
 		mkdir -p dist
 	    cp chip.json dist
 
