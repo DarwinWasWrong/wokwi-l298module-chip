@@ -727,7 +727,7 @@ const char drive_state[][17]=
 {
   "Backward       ",
   "Forward        ", 
-  "Brake Stop      ",
+  "Brake Stop     ",
   "Free Stop      "
   };
 
