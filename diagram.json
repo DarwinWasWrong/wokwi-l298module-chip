@@ -14,5 +14,6 @@
     [ "chip1:ENB", "uno:5", "green", [ "h0" ] ],
     [ "chip1:ENA", "uno:10", "green", [ "h0" ] ]
   ],
-  "dependencies": {}
+  "dependencies": { "chip-modulel298": "https://github.com/DarwinWasWrong/wokwi-l298module-chip@1.00" }
+  
 }
