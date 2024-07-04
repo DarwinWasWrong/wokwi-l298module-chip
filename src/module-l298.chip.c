@@ -1177,7 +1177,7 @@ void draw_state(chip_state_t *chip) {
 void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
   uint32_t offset = chip->fb_w * 4 * row;
   for (int x = 0; x < chip->fb_w * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
   }
 }
 
@@ -1186,7 +1186,7 @@ void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
         return;
     }
   uint32_t offset = chip->fb_w * 4 * y ;
-  buffer_write(chip->framebuffer, offset + x*4, &color, sizeof(color));
+  buffer_write(chip->framebuffer, offset + x*4, (uint8_t*)&color, sizeof(color));
 
 }
 
@@ -1209,7 +1209,7 @@ for (int x=x_start;x < square_size + x_start; x++)
             .a = (pixel_data & 0x000000FF) 
             };
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1237,7 +1237,7 @@ for (int x=x_start;x < square_size + x_start; x++)
         
   
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1250,13 +1250,13 @@ void draw_rectangle(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint
   uint32_t offset = chip->fb_w * 4 * y_start;
   uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
   for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, &color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
   }
 // draw the left and right lines
   for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , &color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , &color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
   }
 }
 
@@ -1267,20 +1267,20 @@ void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t
   uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
 
   for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, &color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
   }
 // draw the left and right lines
   for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , &color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , &color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
   }
  rgba_t color_black = chip->black;
  for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
 
     for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((x_len-1)* 4) ; z+= 4)
     {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , &color_black , sizeof(color_black ));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color_black , sizeof(color_black ));
     
     }
  }
@@ -1294,7 +1294,7 @@ void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t
 
     for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((percent_up)* 4) ; z+= 4)
     {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , &color2, sizeof(color2));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color2, sizeof(color2));
     
     }
   }
@@ -1320,7 +1320,7 @@ for (int x=x_start;x < RIGHT_HEIGHT + x_start; x++)
   color =  chip-> black;
 }   
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1347,7 +1347,7 @@ if(wipe == 1)
   color =  chip-> black;
 }
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
         pixel_spot_data++;
     }
    }

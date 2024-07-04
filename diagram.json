@@ -3,8 +3,8 @@
   "author": "Darwin WasWrong",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-arduino-uno", "id": "uno", "top": 48.6, "left": -0.6, "attrs": {} },
-    { "type": "chip-module-l298", "id": "chip1", "top": -37.38, "left": 379.2, "attrs": {} }
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 192.6, "left": -0.6, "attrs": {} },
+    { "type": "chip-module-l298", "id": "chip1", "top": 163.2, "left": 336, "attrs": {} }
   ],
   "connections": [
     [ "chip1:IN4", "uno:6", "green", [ "h0" ] ],
