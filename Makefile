@@ -20,6 +20,9 @@ $(TARGET): dist $(SOURCES) src/wokwi-api.h
 
 dist/chip.json: dist chip.json
 	  cp chip.json dist
+	  apk add --update zip
+	  rm dist/chip.zip
+	  zip -9 dist/chip.zip dist/chip.wasm dist/chip.json 
 
 .PHONY: test
 test:
