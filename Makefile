@@ -23,6 +23,7 @@ dist/chip.json: dist chip.json
 	  apk add --update zip
 	  rm -f dist/chip.zip
 	  zip -9 dist/chip.zip dist/chip.wasm dist/chip.json 
+	  cp dist/chip.zip dist/chip
 
 .PHONY: test
 test:
