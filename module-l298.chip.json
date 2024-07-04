@@ -1,5 +1,5 @@
 {
-  "name": "chip-module-l298",
+  "name": "module-l298",
   "author": "Darwin WasWrong",
   "pins": [
     "ENA",
