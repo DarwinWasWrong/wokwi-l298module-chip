@@ -4,7 +4,7 @@
   "editor": "wokwi",
   "parts": [
     { "type": "wokwi-arduino-uno", "id": "uno", "top": 192.6, "left": -0.6, "attrs": {} },
-    { "type": "modulel298", "id": "chip1", "top": 163.2, "left": 336, "attrs": {} }
+    { "type": "chip-modulel298", "id": "chip1", "top": 164.22, "left": 331.2, "attrs": {} }
   ],
   "connections": [
     [ "chip1:IN4", "uno:6", "green", [ "h0" ] ],
@@ -15,5 +15,4 @@
     [ "chip1:ENA", "uno:10", "green", [ "h0" ] ]
   ],
   "dependencies": { "chip-modulel298": "https://github.com/DarwinWasWrong/wokwi-l298module-chip@1.0.2" }
-  
 }
