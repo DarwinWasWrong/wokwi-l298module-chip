@@ -27,4 +27,5 @@ dist/chip.json: dist chip.json
 
 .PHONY: test
 test:
-	  cd test && arduino-cli compile -e -b arduino:avr:uno blink
+      test/arduino-cli core install arduino:avr
+	  test/arduino-cli compile -e -b arduino:avr:uno test/blink

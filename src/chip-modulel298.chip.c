@@ -857,8 +857,11 @@ void chip_init(void) {
   //chip->pin_out4 = pin_init("OUT4",ANALOG);
   chip->Vs_attr = attr_init_float("Vs", 12.0);
   // Control Values
-  chip->use_PWM_ENA= attr_init_float("use_PWM_ENA", 0);
-  chip->use_PWM_ENB= attr_init_float("use_PWM_ENB", 0);
+   chip->use_PWM_ENA= attr_init_float("use_PWM_ENA", 1);
+   chip->use_PWM_ENB= attr_init_float("use_PWM_ENB", 1);
+
+
+
 
   // pwm timings
   unsigned long high_time_ENA;
@@ -974,10 +977,11 @@ const pin_watch_config_t watch_config_PWM_B = {
 void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENA = pin_read(chip->pin_ENA);
-
+printf( " %s\n","Pin Change");
 // channel A using PWM
-if (chip->use_PWM_ENA)
+if (chip->use_PWM_ENA == 1)
 {
+    
   if (ENA){
     chip->high_ENA = get_sim_nanos();
     chip->low_time_ENA = chip->high_ENA - chip->low_ENA;
@@ -1004,7 +1008,7 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENB = pin_read(chip->pin_ENB);
-
+  printf( " %s\n","Pin Change b");
 
 // channel B using PWM
 if (chip->use_PWM_ENB)
@@ -1043,10 +1047,9 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
   //float Vs = attr_read_float(chip->Vs_attr);
   // read control for PWM used
   // needs to change to detect held HIGH or LOW for NO PWM
-  uint8_t use_PWM_ENA= attr_read_float(chip->use_PWM_ENA);
-  uint8_t use_PWM_ENB= attr_read_float(chip->use_PWM_ENB);
 
-  if (use_PWM_ENA )
+
+  if (chip->use_PWM_ENA )
   {
   if ( ENA && IN1 && !IN2) chip-> drive_1_state =  0;
   if ( ENA && !IN1 && IN2) chip-> drive_1_state =  1;
@@ -1062,7 +1065,7 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
 
   }
 
-if (use_PWM_ENB )
+if (chip->use_PWM_ENB )
   {
   // drive 2 states
   if ( ENB && IN3 && !IN4) chip-> drive_2_state = 0;
