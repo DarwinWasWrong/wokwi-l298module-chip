@@ -796,8 +796,8 @@ typedef struct {
   uint8_t  previous_speed_percent_A;
   uint8_t  previous_speed_percent_B;
 
-  uint8_t   drive_A_state;
-  uint8_t   drive_B_state;
+  uint8_t  drive_A_state;
+  uint8_t  drive_B_state;
   uint8_t  previous_drive_A_state;
   uint8_t  previous_drive_B_state;
   
@@ -877,13 +877,11 @@ void chip_init(void) {
   unsigned long  previous_high_ENB;
   unsigned long  previous_low_ENB;
 
-
-
-   unsigned long  high_time_ENA;
-   unsigned long  low_time_ENA;
+  unsigned long  high_time_ENA;
+  unsigned long  low_time_ENA;
  
-   unsigned long  high_time_ENB;
-   unsigned long  low_time_ENB;
+  unsigned long  high_time_ENB;
+  unsigned long  low_time_ENB;
   
   // Display values
   chip->speed_percent_A=0;
@@ -944,14 +942,14 @@ const timer_config_t timer_config_motorA = {
     .user_data = chip,
   };
   timer_t timer_motorA = timer_init(&timer_config_motorA);
-  timer_start(timer_motorA,100000, true);
+  timer_start(timer_motorA,500, true);
 
 const timer_config_t timer_config_motorB = {
     .callback = chip_timer_event_motorB,
     .user_data = chip,
   };
   timer_t timer_motorB = timer_init(&timer_config_motorB);
-  timer_start(timer_motorB, 10000, true);
+  timer_start(timer_motorB, 500, true);
 
 
 // config for PWM A watch
@@ -1007,6 +1005,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
 
   float total_ENA = chip->high_time_ENA + chip->low_time_ENA;
   int duty_cycle_ENA = (chip->high_time_ENA / total_ENA) * 100.0;
+   printf( "  duty_cycle_ENA %d \n",duty_cycle_ENA);
   chip->speed_percent_A=duty_cycle_ENA;
 
   // if a change then redisplay
@@ -1159,10 +1158,13 @@ void draw_state(chip_state_t *chip) {
 
   if (chip-> drive_A_state == 0 || chip-> drive_A_state == 1)
   {
+    //sets the speed of the change of cog phase
    timer_start(0, (100 - chip->speed_percent_A) *1000 * 3 , 1);
   }
+
    if (chip-> drive_B_state == 0 || chip-> drive_B_state == 1)
    {
+    //sets the speed of the change of cog phase
    timer_start(1, (100 - chip->speed_percent_B) *1000 * 3, 1);
    }
 
