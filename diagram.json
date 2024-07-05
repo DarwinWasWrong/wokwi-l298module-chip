@@ -12,7 +12,9 @@
     [ "chip1:IN2", "uno:8", "green", [ "h0" ] ],
     [ "chip1:IN1", "uno:9", "green", [ "h0" ] ],
     [ "chip1:ENB", "uno:5", "green", [ "h0" ] ],
-    [ "chip1:ENA", "uno:10", "green", [ "h0" ] ]
+    [ "chip1:ENA", "uno:10", "green", [ "h0" ] ],
+    [ "chip1:5V", "uno:5V", "red", [ "v0", "h72.44", "v278.4", "h-508.8" ] ],
+    [ "chip1:GND", "uno:GND.3", "black", [ "h82.04", "v307.2", "h-489.6", "v-9.6" ] ]
   ],
   "dependencies": { "chip-modulel298": "https://github.com/DarwinWasWrong/wokwi-l298module-chip@1.0.2" }
 }
