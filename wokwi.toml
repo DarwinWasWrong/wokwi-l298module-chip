@@ -5,4 +5,4 @@ firmware = 'test/blink/build/arduino.avr.uno/blink.ino.hex'
 
 [[chip]]
 name = 'modulel298'
-binary = 'chip.wasm'
+binary = 'dist/chip.wasm'
