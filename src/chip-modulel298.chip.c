@@ -988,8 +988,11 @@ const pin_watch_config_t watch_config_PWM_B = {
 
 // PWM A pin change function for watch
 void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
+
+  printf("%s\n", "chip_pin_change_PWM_A");
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENA = pin_read(chip->pin_ENA);
+
 
 // channel A using PWM
  
@@ -1005,7 +1008,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
 
   float total_ENA = chip->high_time_ENA + chip->low_time_ENA;
   int duty_cycle_ENA = (chip->high_time_ENA / total_ENA) * 100.0;
-   printf( "  duty_cycle_ENA %d \n",duty_cycle_ENA);
+  
   chip->speed_percent_A=duty_cycle_ENA;
 
   // if a change then redisplay
@@ -1022,7 +1025,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
 
 // PWM B pin change function for watch
 void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
-  
+  printf("%s\n", "chip_pin_change_PWM_B");
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENB = pin_read(chip->pin_ENB);
 
@@ -1036,8 +1039,12 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
     chip->low_ENB= get_sim_nanos();
     chip->high_time_ENB= chip->low_ENB- chip->high_ENB;
   }
+
   float total = chip->high_time_ENB+ chip->low_time_ENB;
+
+  
   int duty_cycle_ENB = (chip->high_time_ENB / total) * 100.0;
+  // printf( " high_ENB %d low_time_ENB  %d\n",chip->high_ENB,chip->low_time_ENB);
   chip->speed_percent_B=duty_cycle_ENB;
  
 
@@ -1171,11 +1178,11 @@ void draw_state(chip_state_t *chip) {
     //sets the speed of the change of cog phase
    timer_start(1, (100 - chip->speed_percent_B) *1000 * 3, 1);
    }
-
+   chip->speed_percent_B = 50;
   printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
   
-   //draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
-   //draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
+    draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
+    draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 }
 
 
@@ -1200,7 +1207,7 @@ void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
 void draw_cog(chip_state_t *chip, uint32_t x_start,  uint32_t y_start,uint32_t phase) {
 // size of our graphic
 uint8_t square_size = 50;
-printf("%s\n", "Draw Cog");
+
 uint32_t pixel_spot_data = 0;
 for (int x=x_start;x < square_size + x_start; x++)
    {
