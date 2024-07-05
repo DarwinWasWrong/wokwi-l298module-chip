@@ -898,7 +898,7 @@ void chip_init(void) {
   chip->row = 0;
   // get the screen size
   chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
-  printf("Framebuffer Sizes: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
+  printf("Framebuffer : fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
  
  // settings for gears and displays
  // phase of gear display
@@ -942,14 +942,14 @@ const timer_config_t timer_config_motorA = {
     .user_data = chip,
   };
   timer_t timer_motorA = timer_init(&timer_config_motorA);
-  timer_start(timer_motorA,500, true);
+  timer_start(timer_motorA,5000, true);
 
 const timer_config_t timer_config_motorB = {
     .callback = chip_timer_event_motorB,
     .user_data = chip,
   };
   timer_t timer_motorB = timer_init(&timer_config_motorB);
-  timer_start(timer_motorB, 500, true);
+  timer_start(timer_motorB, 5000, true);
 
 
 // config for PWM A watch
@@ -992,7 +992,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   uint8_t ENA = pin_read(chip->pin_ENA);
 
 // channel A using PWM
-
+ 
   if (ENA){
     chip->high_ENA = get_sim_nanos();
     chip->low_time_ENA = chip->high_ENA - chip->low_ENA;
@@ -1063,11 +1063,12 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
  
   // read control for PWM used
   // needs to change to detect held HIGH or LOW for NO PWM
-  uint8_t use_PWM_ENA= attr_read_float(chip->use_PWM_ENA);
-  uint8_t use_PWM_ENB= attr_read_float(chip->use_PWM_ENB);
+  uint8_t use_PWM_ENA= (uint8_t)attr_read_float(chip->use_PWM_ENA);
+  uint8_t use_PWM_ENB= (uint8_t)attr_read_float(chip->use_PWM_ENB);
 
   if (use_PWM_ENA )
   {
+    printf("%s\n", "use_PWM_ENA on");
   if ( ENA && IN1 && !IN2) chip-> drive_A_state =  0;
   if ( ENA && !IN1 && IN2) chip-> drive_A_state =  1;
   if ( ENA && IN1 == IN2) chip-> drive_A_state =   2;
@@ -1076,6 +1077,7 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
   else
   {
   //drive 1 states
+  printf("%s\n", "use_PWM_ENA off");
   if ( IN1 && !IN2) chip-> drive_A_state =  0;
   if (!IN1 && IN2) chip->  drive_A_state =  1;
   if ( IN1 == IN2) chip->  drive_A_state =  2;
@@ -1084,17 +1086,19 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
 
 if (use_PWM_ENB )
   {
+    printf("%s\n", "use_PWM_ENB on");
   // drive 2 states
   if ( ENB && IN3 && !IN4) chip-> drive_B_state = 0;
   if ( ENB && !IN3 && IN4) chip-> drive_B_state = 1;
   if ( ENB && IN3 == IN4) chip-> drive_B_state =  2;
-  if ( !ENB ) chip-> drive_A_state =              3;
+  if ( !ENB ) chip-> drive_B_state =              3;
   }
   else
  {
-  if (IN3 && !IN4) chip-> drive_B_state = 0;
-  if ( !IN3 && IN4) chip-> drive_B_state = 1;
-  if (IN3 == IN4) chip-> drive_B_state =  2;
+  printf("%s\n", "use_PWM_ENB off");
+  if ( IN3 && !IN4) chip-> drive_B_state = 0;
+  if (!IN3 && IN4) chip-> drive_B_state  = 1;
+  if ( IN3 == IN4) chip-> drive_B_state  = 2;
  }
   draw_state(chip);
 }
@@ -1170,8 +1174,8 @@ void draw_state(chip_state_t *chip) {
 
   printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
   
-   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
-   draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
+   //draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
+   //draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 }
 
 
@@ -1196,7 +1200,7 @@ void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
 void draw_cog(chip_state_t *chip, uint32_t x_start,  uint32_t y_start,uint32_t phase) {
 // size of our graphic
 uint8_t square_size = 50;
-
+printf("%s\n", "Draw Cog");
 uint32_t pixel_spot_data = 0;
 for (int x=x_start;x < square_size + x_start; x++)
    {

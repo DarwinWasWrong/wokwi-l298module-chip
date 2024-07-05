@@ -16,5 +16,5 @@
     [ "chip1:5V", "uno:5V", "red", [ "v0", "h72.44", "v278.4", "h-508.8" ] ],
     [ "chip1:GND", "uno:GND.3", "black", [ "h82.04", "v307.2", "h-489.6", "v-9.6" ] ]
   ],
-  "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-l298module-chip@4.0.3" }
+  "dependencies": {}
 }
