@@ -898,7 +898,7 @@ void chip_init(void) {
   chip->row = 0;
   // get the screen size
   chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
-  printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
+  printf("Framebuffer Sizes: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
  
  // settings for gears and displays
  // phase of gear display
