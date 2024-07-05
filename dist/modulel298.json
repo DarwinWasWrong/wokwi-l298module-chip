@@ -1,0 +1,40 @@
+{
+  "name": "modulel298",
+  "author": "Darwin WasWrong",
+  "pins": [
+    "ENA",
+    "IN1",
+    "IN2",
+    "IN3",
+    "IN4",
+    "ENB",
+    "",
+    "",
+    "5V",
+    "GND",
+    "Motor V"
+  ],
+  "controls": [
+
+     { "id": "use_PWM_ENAA",
+      "label": "PWM USED ENA",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 1
+     }
+     ,
+     { "id": "use_PWM_ENB",
+      "label": "PWM USED ENB",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 1
+     }
+  ],
+    "display": {
+    "width":256,
+    "height": 128
+  }
+
+}
