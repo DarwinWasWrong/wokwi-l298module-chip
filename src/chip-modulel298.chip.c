@@ -867,7 +867,7 @@ static void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value);
 static void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value);
 
 void chip_init(void) {
-     printf("*** L298chip initialising...\n");
+  printf("*** L298chip initialising...\n");
   
   chip_state_t *chip = malloc(sizeof(chip_state_t));
 
@@ -964,7 +964,7 @@ void chip_init(void) {
   chip-> bar_1_2_y=  chip->motor_1_2_arrow_y + 20;
   chip-> bar_left_x=chip->motor_A_x ;
   chip-> bar_right_x=chip->motor_B_x ;
-
+   printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
 //  box around displays
    draw_rectangle(chip, 101,10,75,100,chip->green ,0);
    draw_rectangle(chip, 175,10,75,100,chip->green ,0);
@@ -977,6 +977,7 @@ void chip_init(void) {
    draw_rectangle(chip, 21,110,25,5, chip-> white   ,0);
    draw_rectangle(chip, 203,110,25,5, chip-> white   ,0);
 // board
+ printf("Draw the board ...\n");
    draw_board(chip, 10,1);
   
 
@@ -1011,6 +1012,7 @@ const pin_watch_config_t watch_config_PWM_B = {
   };
 
   // PWM watches
+  printf("PWM watches ...\n");
   pin_watch(chip->pin_ENA, &watch_config_PWM_A );
   pin_watch(chip->pin_ENB, &watch_config_PWM_B );
   
@@ -1022,6 +1024,7 @@ const pin_watch_config_t watch_config_PWM_B = {
   };
 
   // pins watches
+  printf("pins watches ...\n");
   pin_watch(chip->pin_IN1, &watch_config);
   pin_watch(chip->pin_IN2, &watch_config);
   pin_watch(chip->pin_IN3, &watch_config);
