@@ -23,35 +23,8 @@ void setup ()
  
 void loop ()
 {
-  //both_forward_changing();
- // delay(5000);
-  Serial.println("START SLOW PWM");
-  for ( int u=0; u<5;u++)
-  {
-  digitalWrite(ENA,HIGH);
-  digitalWrite(ENB,HIGH);
-  delay(10);
-   digitalWrite(ENA,LOW);
-   digitalWrite(ENB,LOW);
-    delay(10);
-    Serial.print("Run =");
-        Serial.println(u);
-  }
-    Serial.println("END SLOW PWM");
-    
-    Serial.println("START END IN1");
-  for ( int u=0; u<5;u++)
-  {
-  digitalWrite(IN1,HIGH);
-  delay(100);
-  digitalWrite(IN1,LOW);
-  delay(10);
-      Serial.print("Run =");
-        Serial.println(u);
-  }
-    Serial.println("END IN1");
-    delay(5000);
-  /*
+ both_forward_changing();
+
  both_backward();
  delay(5000);
 
@@ -70,7 +43,7 @@ void loop ()
  
   one_forward_changing();
   delay(1000);
-*/
+
 }
 
 void both_backward () {
