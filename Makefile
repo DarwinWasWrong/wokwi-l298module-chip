@@ -24,7 +24,7 @@ dist/chip.json: dist chip.json
 
 	  rm -f dist/chip.zip
 	  zip -9 dist/chip.zip dist/chip.wasm dist/chip.json 
-	    test/arduino-cli compile -e -b arduino:avr:uno test/blink
+	  
 
 .PHONY: test
 test: 
