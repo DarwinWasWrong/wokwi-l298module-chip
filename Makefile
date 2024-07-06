@@ -21,11 +21,13 @@ $(TARGET): dist $(SOURCES) src/wokwi-api.h
 dist/chip.json: dist chip.json
 	  cp chip.json dist
 	  apk add --update zip
+
 	  rm -f dist/chip.zip
 	  zip -9 dist/chip.zip dist/chip.wasm dist/chip.json 
-	  
+	    test/arduino-cli compile -e -b arduino:avr:uno test/blink
 
 .PHONY: test
-test:
+test: 
+	  apk add gcompat
       test/arduino-cli core install arduino:avr
 	  test/arduino-cli compile -e -b arduino:avr:uno test/blink
