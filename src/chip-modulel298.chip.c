@@ -845,8 +845,8 @@ static void chip_pinb_change(void *user_data, pin_t pin, uint32_t value);
 
 void chip_init(void) {
   chip_state_t *chip = malloc(sizeof(chip_state_t));
-  chip->pin_ENA = pin_init("EN A",INPUT);
-  chip->pin_ENB = pin_init("EN B",INPUT);
+  chip->pin_ENA = pin_init("ENA",INPUT);
+  chip->pin_ENB = pin_init("ENB",INPUT);
   chip->pin_IN1 = pin_init("IN1",INPUT);
   chip->pin_IN2 = pin_init("IN2",INPUT);
   chip->pin_IN3 = pin_init("IN3",INPUT);
