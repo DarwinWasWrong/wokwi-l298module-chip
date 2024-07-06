@@ -1,7 +1,10 @@
 
-#include "wokwi-api.h"
-#include <stdio.h>
-#include <stdlib.h>
+// Wokwi Custom Chip - For docs and examples see:
+// https://docs.wokwi.com/chips-api/getting-started
+//
+// SPDX-License-Identifier: MIT
+// Copyright 2023 Darwin WasWrong
+// src/L298-module.chip.c
 
 // thanks to
 // Maverick - for saving my mind with PWM
@@ -13,6 +16,10 @@
 // catch 0 and 255 in PWM
 
 
+
+#include "wokwi-api.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #define BOARD_HEIGHT 100
 #define BOARD_WIDTH 100
@@ -721,7 +728,7 @@ const char drive_state[][17]=
 {
   "Backward       ",
   "Forward        ", 
-  "Brake Stop      ",
+  "Brake Stop     ",
   "Free Stop      "
   };
 
@@ -737,41 +744,56 @@ typedef struct {
 
 typedef struct {
   
-  //pin_t pin_out1;
-  //pin_t pin_out2;
-  //pin_t pin_out3;
-  //pin_t pin_out4;
-
   //Module Pins
+  // channel A
   pin_t pin_IN1;
   pin_t pin_IN2;
+  pin_t pin_ENA;
+  pin_t pin_ENA_5v;   // 5V for enable
+// Channel B
   pin_t pin_IN3;
   pin_t pin_IN4;
-  pin_t pin_ENA;
   pin_t pin_ENB;
+  pin_t pin_ENB_5v;  // 5V for enable
+ 
+
+
+// powers and ground
+  pin_t pin_VCC;
+  pin_t pin_GND;
+  pin_t pin_Motor_V;
 
   // start of timing checks for the PWM
-  bool use_PWM_ENA; //  pwm used
-  bool use_PWM_ENB; //  pwm used
+  uint8_t  use_PWM_ENA; //  pwm used
+  uint8_t  use_PWM_ENB; //  pwm used
+// Channel A  
+  uint32_t  high_ENA;
+  uint32_t  low_ENA;
+  uint32_t  previous_high_ENA;
+  uint32_t  previous_low_ENA;
+  uint32_t  high_time_ENA;
+  uint32_t  low_time_ENA;
+// Channel B
+  uint32_t  high_ENB;
+  uint32_t  low_ENB;
+  uint32_t  previous_high_ENB;
+  uint32_t  previous_low_ENB;
+  uint32_t  high_time_ENB;
+  uint32_t  low_time_ENB;
 
-  unsigned long high_ENA;
-  unsigned long low_ENA;
-  unsigned long high_time_ENA;
-  unsigned long low_time_ENA;
-
-  unsigned long high_ENB;
-  unsigned long low_ENB;
-  unsigned long high_time_ENB;
-  unsigned long low_time_ENB;
+// check for start state of jumpered enables
+  uint32_t  start_state_ENA;
+  uint32_t  start_state_ENB;
 
   uint32_t Vs_attr;  // power
 
+// frame buffer details
   uint32_t fb_w;
   uint32_t fb_h;
   uint32_t row;
   buffer_t framebuffer;
 
-
+// colors
   rgba_t   white;
   rgba_t   green;
   rgba_t   background;
@@ -790,13 +812,14 @@ typedef struct {
   uint8_t  previous_speed_percent_A;
   uint8_t  previous_speed_percent_B;
 
-  uint8_t   drive_A_state;
-  uint8_t   drive_B_state;
+  uint8_t  drive_A_state;
+  uint8_t  drive_B_state;
   uint8_t  previous_drive_A_state;
   uint8_t  previous_drive_B_state;
+  
   // motor graphics position
-  uint8_t motorApos;
-  uint8_t motorBpos;
+  uint8_t motorAphase;
+  uint8_t motorBphase;
   uint8_t motor_A_y;
   uint8_t motor_A_x;
   uint8_t motor_2_x;
@@ -841,41 +864,71 @@ static void chip_timer_event_motorB(void *user_data);
 // pin change watches
 static void chip_pin_change(void *user_data, pin_t pin, uint32_t value);
 static void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value);
-static void chip_pinb_change(void *user_data, pin_t pin, uint32_t value);
+static void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value);
 
 void chip_init(void) {
+     printf("*** L298chip initialising...\n");
+  
   chip_state_t *chip = malloc(sizeof(chip_state_t));
-  chip->pin_ENA = pin_init("EN A",INPUT);
-  chip->pin_ENB = pin_init("EN B",INPUT);
+
+  chip->pin_ENA = pin_init("ENA",INPUT);
   chip->pin_IN1 = pin_init("IN1",INPUT);
   chip->pin_IN2 = pin_init("IN2",INPUT);
+ 
+
+  chip->pin_ENB = pin_init("ENB",INPUT);
   chip->pin_IN3 = pin_init("IN3",INPUT);
   chip->pin_IN4 = pin_init("IN4",INPUT);
-  //chip->pin_out1 = pin_init("OUT1",ANALOG);
- // chip->pin_out2 = pin_init("OUT2",ANALOG);
-  //chip->pin_out3 = pin_init("OUT3",ANALOG);
-  //chip->pin_out4 = pin_init("OUT4",ANALOG);
-  chip->Vs_attr = attr_init_float("Vs", 12.0);
-  // Control Values
-  // chip->use_PWM_ENA= attr_init_float("use_PWM_ENA", 1);
-  // chip->use_PWM_ENB= attr_init_float("use_PWM_ENB", 1);
-   chip->use_PWM_ENA= 0;
-   chip->use_PWM_ENB= 0;
+
+
+  chip->pin_VCC = pin_init("VCC",INPUT);
+  chip->pin_GND = pin_init("GND",INPUT);
+  chip->pin_Motor_V = pin_init("Motor_V",INPUT);
+
+  // logic for detecting jumper
+  // set the 5v jumper pins to 5v
+  chip->pin_ENA_5v= pin_init("ENA_5v",OUTPUT_HIGH );
+  chip->pin_ENB_5v= pin_init("ENB_5v",OUTPUT_HIGH );
+
+  // read then ENA pin - if jumper is on - it will be high
+  chip->start_state_ENA =pin_read(chip->pin_ENA);
+  // read then ENB pin - if jumper is on - it will be high
+  chip->start_state_ENB =pin_read(chip->pin_ENB);
+
+ //
+  printf( "ENA linked to 5v %d\n",chip->start_state_ENA);
+  printf( "ENB linked to 5v %d\n",chip->start_state_ENB);
+
+
+  
+  // if there is no link have to check for PWM or switching
+  chip->use_PWM_ENA= !chip->start_state_ENA;
+  chip->use_PWM_ENB= !chip->start_state_ENB;
+
 
 
 
   // pwm timings
-  unsigned long high_time_ENA;
-  unsigned long low_time_ENA;
-  unsigned long high_time_ENB;
-  unsigned long low_time_ENB;
+  unsigned long  high_ENA;
+  unsigned long  low_ENA;
+  unsigned long  previous_high_ENA;
+  unsigned long  previous_low_ENA;
+  unsigned long  high_ENB;
+  unsigned long  low_ENB;
+  unsigned long  previous_high_ENB;
+  unsigned long  previous_low_ENB;
+
+
+
+   unsigned long  high_time_ENA;
+   unsigned long  low_time_ENA;
+ 
+   unsigned long  high_time_ENB;
+   unsigned long  low_time_ENB;
   
   // Display values
   chip->speed_percent_A=0;
   chip->speed_percent_B=0;
-  // dummy value to fire of percentage bar draw on start
-  chip->previous_speed_percent_A= 10;
-  chip->previous_speed_percent_B= 10;
 
   // display colors
   chip-> white      = (rgba_t) { .r = 0xff, .g = 0xff, .b = 0xff, .a = 0xff };
@@ -883,8 +936,8 @@ void chip_init(void) {
   chip-> background = (rgba_t) { .r = 0xf7, .g = 0xf7, .b = 0xf7, .a = 0xff };
   chip-> purple    = (rgba_t) { .r = 0xff, .g=0x00,   .b=0xff,   .a=0xff   };
   chip-> black    =  (rgba_t) { .r = 0x00, .g=0x00,   .b=0x00,   .a=0x00   };
-  chip-> red    =  (rgba_t) { .r = 0xff, .g=0x00,   .b=0x00,   .a=0x00   };
-  chip-> blue    =  (rgba_t) { .r = 0x00, .g=0x00,   .b=0xff,   .a=0x00   };
+  chip-> red    =  (rgba_t) { .r = 0xff, .g=0x00,   .b=0x00,   .a=0xff   };
+  chip-> blue    =  (rgba_t) { .r = 0x00, .g=0x00,   .b=0xff,   .a=0xff   };
   chip->row = 0;
   // get the screen size
   chip->framebuffer = framebuffer_init(&chip->fb_w, &chip->fb_h);
@@ -892,8 +945,8 @@ void chip_init(void) {
  
  // settings for gears and displays
  // phase of gear display
-  chip->motorApos=0;
-  chip->motorBpos=0;
+  chip->motorAphase=0;
+  chip->motorBphase=0;
   // positioning
   chip->motor_A_y=20;
   chip->motor_A_x=113;
@@ -927,34 +980,39 @@ void chip_init(void) {
    draw_board(chip, 10,1);
   
 
+
 const timer_config_t timer_config_motorA = {
     .callback = chip_timer_event_motorA,
     .user_data = chip,
   };
-
   timer_t timer_motorA = timer_init(&timer_config_motorA);
-  timer_start(timer_motorA, 100 *1000, true);
+  timer_start(timer_motorA,100000, true);
 
 const timer_config_t timer_config_motorB = {
     .callback = chip_timer_event_motorB,
     .user_data = chip,
   };
   timer_t timer_motorB = timer_init(&timer_config_motorB);
-  timer_start(timer_motorB, 5 *1000, true);
+  timer_start(timer_motorB, 10000, true);
+
 
 // config for PWM A watch
-const pin_watch_config_t watch_config_a= {
+const pin_watch_config_t watch_config_PWM_A = {
     .edge = BOTH,
     .pin_change = chip_pin_change_PWM_A,
     .user_data = chip
   };
 
 // config for PWM B watch
-const pin_watch_config_t watch_config_b= {
+const pin_watch_config_t watch_config_PWM_B = {
     .edge = BOTH,
-    .pin_change = chip_pinb_change,
+    .pin_change = chip_pin_change_PWM_B,
     .user_data = chip
   };
+
+  // PWM watches
+  pin_watch(chip->pin_ENA, &watch_config_PWM_A );
+  pin_watch(chip->pin_ENB, &watch_config_PWM_B );
   
   // config for other pins IN1 IN2 IN3 IN4
   const pin_watch_config_t watch_config = {
@@ -963,16 +1021,14 @@ const pin_watch_config_t watch_config_b= {
     .user_data = chip
   };
 
-   // PWM watches
-  pin_watch(chip->pin_ENA, &watch_config_a);
-  pin_watch(chip->pin_ENB, &watch_config_b);
-  
-
   // pins watches
   pin_watch(chip->pin_IN1, &watch_config);
   pin_watch(chip->pin_IN2, &watch_config);
   pin_watch(chip->pin_IN3, &watch_config);
   pin_watch(chip->pin_IN4, &watch_config);
+
+
+
 
 
 }
@@ -981,42 +1037,44 @@ const pin_watch_config_t watch_config_b= {
 void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENA = pin_read(chip->pin_ENA);
-   printf( " %s\n","------ Pin Change A");
+
 // channel A using PWM
- 
-  if (ENA == 1){
+
+  if (ENA){
     chip->high_ENA = get_sim_nanos();
     chip->low_time_ENA = chip->high_ENA - chip->low_ENA;
-  } else {
+  } 
+  else 
+  {
     chip->low_ENA = get_sim_nanos();
     chip->high_time_ENA = chip->low_ENA - chip->high_ENA ;
   }
+
   float total_ENA = chip->high_time_ENA + chip->low_time_ENA;
   int duty_cycle_ENA = (chip->high_time_ENA / total_ENA) * 100.0;
   chip->speed_percent_A=duty_cycle_ENA;
 
- 
+  // if a change then redisplay
+  if ( chip->previous_speed_percent_A != chip->speed_percent_A)
+  {
+   draw_state(chip);
+   chip->previous_speed_percent_A = chip->speed_percent_A;
+  }
+
+
 
   
 }
 
 // PWM B pin change function for watch
-void chip_pinb_change(void *user_data, pin_t pin, uint32_t value) {
+void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   
   chip_state_t *chip = (chip_state_t*)user_data;
-
-
-
-
-
   uint8_t ENB = pin_read(chip->pin_ENB);
- printf( " %s\n","----------------   Pin Change B");
 
 
 // channel B using PWM
-if (chip->use_PWM_ENB)
-{
- 
+
   if (ENB){
     chip->high_ENB= get_sim_nanos();
     chip->low_time_ENB= chip->high_ENB- chip->low_ENB;
@@ -1028,8 +1086,15 @@ if (chip->use_PWM_ENB)
   int duty_cycle_ENB = (chip->high_time_ENB / total) * 100.0;
   chip->speed_percent_B=duty_cycle_ENB;
  
-}
 
+ // if a change then redisplay
+ if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
+  {
+   draw_state(chip);
+   chip->previous_speed_percent_B = chip->speed_percent_B;
+  }
+ 
+ 
 }
 
 
@@ -1041,12 +1106,13 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
   uint8_t IN2 = pin_read(chip->pin_IN2);
   uint8_t IN3 = pin_read(chip->pin_IN3);
   uint8_t IN4 = pin_read(chip->pin_IN4);
-  //float Vs = attr_read_float(chip->Vs_attr);
+ 
   // read control for PWM used
   // needs to change to detect held HIGH or LOW for NO PWM
-  printf( " %s\n","on IN pins");
+  uint8_t use_PWM_ENA= attr_read_float(chip->use_PWM_ENA);
+  uint8_t use_PWM_ENB= attr_read_float(chip->use_PWM_ENB);
 
-  if (chip->use_PWM_ENA )
+  if (use_PWM_ENA )
   {
   if ( ENA && IN1 && !IN2) chip-> drive_A_state =  0;
   if ( ENA && !IN1 && IN2) chip-> drive_A_state =  1;
@@ -1062,7 +1128,7 @@ void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
 
   }
 
-if (chip->use_PWM_ENB )
+if (use_PWM_ENB )
   {
   // drive 2 states
   if ( ENB && IN3 && !IN4) chip-> drive_B_state = 0;
@@ -1079,8 +1145,14 @@ if (chip->use_PWM_ENB )
   draw_state(chip);
 }
 
+
+
+
+
+
 void draw_state(chip_state_t *chip) {
   
+  //turn off the two timers
   timer_stop(0);
   timer_stop(1);
 
@@ -1137,34 +1209,17 @@ void draw_state(chip_state_t *chip) {
 
   if (chip-> drive_A_state == 0 || chip-> drive_A_state == 1)
   {
-   timer_start(0, (100 - chip->speed_percent_A) * 1000 * 3 , 1);
+   timer_start(0, (100 - chip->speed_percent_A) *1000 * 3 , 1);
   }
-
    if (chip-> drive_B_state == 0 || chip-> drive_B_state == 1)
    {
-   timer_start(1, (100 - chip->speed_percent_B) * 1000 * 3, 1);
+   timer_start(1, (100 - chip->speed_percent_B) *1000 * 3, 1);
    }
-   chip->speed_percent_B = 24;
-printf( "   chip->speed_percent_A %d chip->speed_percent_B  %d\n",chip->speed_percent_A,chip->speed_percent_B);
-printf( "   previous_speed_percent_A  %d previous_speed_percent_B   %d\n",chip->previous_speed_percent_A,chip->previous_speed_percent_B);
-  //rgba_t color;
 
-   // if a change then redisplay
-  if ( chip->previous_speed_percent_A != chip->speed_percent_A)
-  {
-   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
-   chip->previous_speed_percent_A = chip->speed_percent_A;
-  }
+  printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
   
-   // if a change then redisplay
- if ( chip->previous_speed_percent_B != chip->speed_percent_B)
-  {
-     draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
-   chip->previous_speed_percent_B = chip->speed_percent_B;
-  }
- 
-
-
+   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
+   draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 }
 
 
@@ -1172,7 +1227,7 @@ printf( "   previous_speed_percent_A  %d previous_speed_percent_B   %d\n",chip->
 void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
   uint32_t offset = chip->fb_w * 4 * row;
   for (int x = 0; x < chip->fb_w * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
   }
 }
 
@@ -1181,7 +1236,7 @@ void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
         return;
     }
   uint32_t offset = chip->fb_w * 4 * y ;
-  buffer_write(chip->framebuffer, offset + x*4, (uint8_t*)&color, sizeof(color));
+  buffer_write(chip->framebuffer, offset + x*4, &color, sizeof(color));
 
 }
 
@@ -1204,7 +1259,7 @@ for (int x=x_start;x < square_size + x_start; x++)
             .a = (pixel_data & 0x000000FF) 
             };
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color, 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1232,7 +1287,7 @@ for (int x=x_start;x < square_size + x_start; x++)
         
   
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1245,13 +1300,13 @@ void draw_rectangle(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint
   uint32_t offset = chip->fb_w * 4 * y_start;
   uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
   for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
+    buffer_write(chip->framebuffer, offset2 + x, &color, sizeof(color));
   }
 // draw the left and right lines
   for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , &color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , &color, sizeof(color));
   }
 }
 
@@ -1262,42 +1317,37 @@ void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t
   uint32_t offset2 = chip->fb_w * 4 * (y_len + y_start) ;
 
   for (int x = x_start * 4 ; x < x_start * 4 + x_len * 4; x += 4) {
-    buffer_write(chip->framebuffer, offset + x, (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, offset2 + x, (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, offset + x, &color, sizeof(color));
+    buffer_write(chip->framebuffer, offset2 + x, &color, sizeof(color));
   }
 // draw the left and right lines
   for (int y = y_start  ; y < y_start + y_len ; y++) {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , (uint8_t*)&color, sizeof(color));
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , (uint8_t*)&color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + x_start * 4 , &color, sizeof(color));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 +x_start * 4 + (x_len * 4)-4 , &color, sizeof(color));
   }
  rgba_t color_black = chip->black;
  for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
 
     for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((x_len-1)* 4) ; z+= 4)
     {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color_black , sizeof(color_black ));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , &color_black , sizeof(color_black ));
     
     }
  }
 
 
 
- rgba_t color2 = chip->white;
- percent_up = percent_up /2;
- //printf(" x_len %d       percent_up %d\n",x_len, percent_up);
-   for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
+    rgba_t color2 = chip->white;
+    percent_up = percent_up /2;
+    //printf(" x_len %d       percent_up %d\n",x_len, percent_up);
+    for (int y = y_start +1 ; y < y_start + y_len  ; y++) {
 
     for ( int z= (x_start +1) * 4 ; z < (x_start) * 4 + ((percent_up)* 4) ; z+= 4)
     {
-    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , (uint8_t*)&color2, sizeof(color2));
+    buffer_write(chip->framebuffer, y * chip->fb_w * 4 + z , &color2, sizeof(color2));
     
     }
   }
-
-
-
-
-
 }
 
 void draw_right_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe) {
@@ -1320,7 +1370,7 @@ for (int x=x_start;x < RIGHT_HEIGHT + x_start; x++)
   color =  chip-> black;
 }   
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
         pixel_spot_data++;
     }
    }
@@ -1347,30 +1397,30 @@ if(wipe == 1)
   color =  chip-> black;
 }
         uint32_t offset = chip->fb_w * 4 ;  
-        buffer_write(chip->framebuffer, (offset * x) + y * 4, (uint8_t*)&color , 4); 
+        buffer_write(chip->framebuffer, (offset * x) + y * 4, &color , 4); 
         pixel_spot_data++;
     }
    }
 }  
 
-// graphics for motor B
+// graphics for motor A
 void chip_timer_event_motorA(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  draw_cog(chip, chip->motor_A_y,chip->motor_A_x,chip->motorApos);
-  if ( chip-> drive_A_state == 0 ) chip->motorApos=chip->motorApos - 1;
-  if ( chip-> drive_A_state == 1) chip->motorApos=chip->motorApos + 1;
-  if (chip->motorApos < 0) chip->motorApos =8;
-  if (chip->motorApos >8) chip->motorApos = 0;
+  draw_cog(chip, chip->motor_A_y,chip->motor_A_x,chip->motorAphase);
+  if ( chip-> drive_A_state == 0 ) chip->motorAphase=chip->motorAphase - 1;
+  if ( chip-> drive_A_state == 1) chip->motorAphase=chip->motorAphase + 1;
+  if (chip->motorAphase < 0) chip->motorAphase =8;
+  if (chip->motorAphase >8) chip->motorAphase = 0;
 
 }
 
 // graphics for motor B
 void chip_timer_event_motorB(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  draw_cog(chip, chip->motor_2_x,chip->motor_B_x,chip->motorBpos);
-  if ( chip-> drive_B_state == 0 ) chip->motorBpos=chip->motorBpos - 1;
-  if ( chip-> drive_B_state == 1) chip->motorBpos=chip->motorBpos + 1;
-  if (chip->motorBpos < 0) chip->motorBpos = 8;
-  if (chip->motorBpos > 8) chip->motorBpos = 0;
+  draw_cog(chip, chip->motor_2_x,chip->motor_B_x,chip->motorBphase);
+  if ( chip-> drive_B_state == 0 ) chip->motorBphase=chip->motorBphase - 1;
+  if ( chip-> drive_B_state == 1) chip->motorBphase=chip->motorBphase + 1;
+  if (chip->motorBphase < 0) chip->motorBphase = 8;
+  if (chip->motorBphase > 8) chip->motorBphase = 0;
 
 }
