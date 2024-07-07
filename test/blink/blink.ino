@@ -18,31 +18,39 @@ void setup ()
  pinMode (IN4, OUTPUT);
 
  Serial.begin(115200);
- Serial.println("Unit Testing started -- changed inouts and chip change");
+ Serial.println("Unit Testing started");
 }
  
 void loop ()
 {
- both_forward_changing();
-
+ 
+left_255_right_0();
+ delay(15000);
  both_backward();
  delay(5000);
 
- stopRobot_LOW_EN();
- delay(5000);
+ left_254_right_10();
+  delay(15000);
+/*
+  stopRobot_LOW_EN();
+  delay(5000);
   
 
  both_forward();
- delay(5000);
+  delay(5000);
  
-  stopRobot_HIGH_EN();
+
+
+stopRobot_HIGH_EN();
   delay(5000);
 
 
-
+  both_forward_changing();
+  delay(1000);
  
   one_forward_changing();
   delay(1000);
+*/
 
 }
 
@@ -80,8 +88,8 @@ void motor1_backward () {
   Serial.println("backward ");
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA , 254);
-   analogWrite(ENB, 254);
+  //analogWrite(ENA , 255);
+ // analogWrite(ENB, 255);
 }
 
 void motor2_backward () {
@@ -132,16 +140,12 @@ void both_forward_changing() {
   analogWrite(ENA, y);
   analogWrite(ENB, y);
   delay(delay_space);
-  Serial.print(" speed ");
-  Serial.println(y);
   }
   for ( int y=255;y > 0;y=y-10)
   {
   analogWrite(ENA, y);
   analogWrite(ENB, y);
   delay(delay_space);
-  Serial.print(" speed ");
-  Serial.println(y);
   }
 }
 
@@ -167,21 +171,48 @@ void one_forward_changing() {
 
 
 void stopRobot_LOW_EN() {
-  Serial.println("STOP ENA nad ENB LOW");
+  Serial.println("STOP is   ENA and ENB LOW all other pins LOW");
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN4, LOW);
-  analogWrite(ENA, 0);
-  analogWrite(ENB, 0);
+  analogWrite(ENA, LOW);
+  analogWrite(ENB, LOW);
 }
 
 void stopRobot_HIGH_EN() {
-  Serial.println("STOP ENA nad ENB HIGH");
+  Serial.println("STOP is   ENA and ENB HIGH all other pins LOW");
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN2, LOW);
   digitalWrite(IN4, LOW);
   analogWrite(ENA, HIGH);
   analogWrite(ENB, HIGH);
+}
+
+
+void left_255_right_0() {
+   Serial.println("left 255 right 0  FORWARD");
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  
+
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 255);
+  delay(delay_space);
+}
+
+void left_254_right_10() {
+   Serial.println("left 250 right 10  FORWARD");
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  
+
+  analogWrite(ENA, 10);
+  analogWrite(ENB, 250);
+  delay(delay_space);
 }

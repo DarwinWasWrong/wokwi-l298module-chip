@@ -861,6 +861,10 @@ static void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, u
 static void chip_timer_event_motorA(void *user_data);
 static void chip_timer_event_motorB(void *user_data);
 
+// timer for watchdog
+static void chip_timer_event_Awatchdog(void *user_data);
+static void chip_timer_event_Bwatchdog(void *user_data);
+
 // pin change watches
 static void chip_pin_change(void *user_data, pin_t pin, uint32_t value);
 static void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value);
@@ -977,9 +981,32 @@ void chip_init(void) {
    draw_rectangle(chip, 21,110,25,5, chip-> white   ,0);
    draw_rectangle(chip, 203,110,25,5, chip-> white   ,0);
 // board
- printf("Draw the board ...\n");
-   draw_board(chip, 10,1);
-  
+  printf("Draw the board ...\n");
+  draw_board(chip, 10,1);
+  printf("Draw the speed holders ...\n");
+  draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,0);
+  draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,0);
+  //Draw the cogs
+  printf("Draw the cogs ...\n");
+  draw_cog(chip, chip->motor_A_y,chip->motor_A_x,0);
+  draw_cog(chip, chip->motor_A_y,chip->motor_B_x,0);
+
+
+
+const timer_config_t timer_config_Awatchdog = {
+    .callback = chip_timer_event_Awatchdog,
+    .user_data = chip,
+  };
+  timer_t timer_Awatchdog = timer_init(&timer_config_Awatchdog);
+  timer_start(timer_Awatchdog,100000, true);
+
+const timer_config_t timer_config_Bwatchdog = {
+    .callback = chip_timer_event_Bwatchdog,
+    .user_data = chip,
+  };
+  timer_t timer_Bwatchdog = timer_init(&timer_config_Bwatchdog);
+  timer_start(timer_Bwatchdog,100000, true);
+
 
 
 const timer_config_t timer_config_motorA = {
@@ -1054,6 +1081,7 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   }
 
   float total_ENA = chip->high_time_ENA + chip->low_time_ENA;
+  
   int duty_cycle_ENA = (chip->high_time_ENA / total_ENA) * 100.0;
   chip->speed_percent_A=duty_cycle_ENA;
 
@@ -1074,7 +1102,7 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENB = pin_read(chip->pin_ENB);
-
+  
 
 // channel B using PWM
 
@@ -1219,7 +1247,7 @@ void draw_state(chip_state_t *chip) {
    timer_start(1, (100 - chip->speed_percent_B) *1000 * 3, 1);
    }
 
-  printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
+    printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
   
    draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
    draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
@@ -1425,5 +1453,19 @@ void chip_timer_event_motorB(void *user_data) {
   if ( chip-> drive_B_state == 1) chip->motorBphase=chip->motorBphase + 1;
   if (chip->motorBphase < 0) chip->motorBphase = 8;
   if (chip->motorBphase > 8) chip->motorBphase = 0;
+
+}
+
+// watch dog A
+void chip_timer_event_Awatchdog(void *user_data) {
+  chip_state_t *chip = (chip_state_t*)user_data;
+  printf("chip->low_time_ENA %d chip->high_time_ENA %d \n",chip->low_time_ENA ,chip->high_time_ENA );
+
+}
+
+// watch dog A
+void chip_timer_event_Bwatchdog(void *user_data) {
+  chip_state_t *chip = (chip_state_t*)user_data;
+  printf("chip->low_time_ENB %d chip->high_time_ENB %d \n",chip->low_time_ENB ,chip->high_time_ENB );
 
 }
