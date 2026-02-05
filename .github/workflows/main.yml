@@ -48,3 +48,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           allowUpdates: true
+      - name: Test with Wokwi
+        uses: wokwi/wokwi-ci-action@v1
+        with:
+          token: wok_8ANE6yBYPCnAQqYEFbKFNMcsiz0xjhUp426b534a
+          path: /init # directory with wokwi.toml, relative to repo's root
+         
+
+

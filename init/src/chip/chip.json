@@ -1,0 +1,42 @@
+{
+  "name": "module-l298",
+  "author": "Darwin WasWrong",
+      "width": 88.5,
+      "height": 38,
+
+ "chips": [{ "id": "chip", "type":"github:DarwinWasWrong/wokwi-l298module-chip@4.0.8" }],
+
+  "pins": [
+    "ENA" : { "x": 4, "y": 10, "target": "chip:ENA" },
+    "IN1": { "x": 4, "y": 12.54, "target": "chip:IN1" } ,
+    "IN2" : { "x": 4, "y": 15.08, "target": "chip:IN2" },
+    "IN3": { "x": 4, "y": 17.62, "target": "chip:IN3" },
+    "IN4": { "x": 4, "y": 20.18, "target": "chip:IN4" },
+    "ENB": { "x": 4, "y": 22.72, "target": "chip:ENB" },
+    "",
+    "",
+    "5V": { "x": 4, "y": 25.26, "target": "chip:5V" },
+    "GND": { "x": 4, "y": 27.8, "target": "chip:GND" },
+    "Motor V": { "x": 4, "y": 30.8, "target": "chip:Motor V" }
+  ],
+
+  "displays": [
+        {
+          "id": "chip",
+          "x": 31.9,
+          "y": -15,
+          "rotate": -90,
+          "width": 31,
+          "height": 67.5,
+          "pixelWidth": 128,
+          "pixelHeight": 296,
+          "chip": "modulel298"
+        }
+      ]
+
+  }
+
+}
+
+
+
