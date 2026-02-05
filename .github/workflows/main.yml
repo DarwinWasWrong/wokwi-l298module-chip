@@ -45,13 +45,13 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: chip.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.token }}
           generateReleaseNotes: true
           allowUpdates: true
       - name: Test with Wokwi
         uses: wokwi/wokwi-ci-action@v1
         with:
-          token: wok_8ANE6yBYPCnAQqYEFbKFNMcsiz0xjhUp426b534a
+          token: ${{ secrets.token }}
           path: /init # directory with wokwi.toml, relative to repo's root
          
 
