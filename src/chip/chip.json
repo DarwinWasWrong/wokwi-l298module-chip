@@ -30,12 +30,13 @@
           "height": 67.5,
           "pixelWidth": 128,
           "pixelHeight": 296,
-          "chip": "module-l298_module"
+          "chip": "modulel298"
         }
       ]
 
   }
 
 }
+
 
 
