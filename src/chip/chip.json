@@ -17,7 +17,7 @@
     "",
     "5V": { "x": 4, "y": 25.26, "target": "chip:5V" },
     "GND": { "x": 4, "y": 27.8, "target": "chip:GND" },
-    "Motor V": { "x": 4, "y": 30.8, "target": "chip:"Motor V" }
+    "Motor V": { "x": 4, "y": 30.8, "target": "chip:Motor V" }
   ],
 
   "displays": [
@@ -37,4 +37,5 @@
   }
 
 }
+
 
