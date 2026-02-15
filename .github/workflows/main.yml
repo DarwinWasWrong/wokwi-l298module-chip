@@ -14,7 +14,7 @@ jobs:
       - name: Build chip
         uses: wokwi/wokwi-chip-clang-action@main
         with:
-          sources: "/init/src/chip-modulel298.chip.c"  #cant fine file ?
+          sources: "chip-modulel298.chip.c"  #cant fine file ?
       - name: Copy chip.json
         run: sudo cp chip.json dist
       - name: 'Upload Artifacts'
