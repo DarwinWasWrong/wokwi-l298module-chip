@@ -1,10 +1,3 @@
-// basic RGBA color
-typedef struct {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-  uint8_t a;
-} rgba_t;
 
 
 
@@ -711,13 +704,7 @@ static const int32_t black[]  = {
   0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000
 };
 
-// basic RGBA color
-typedef struct {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-  uint8_t a;
-} rgba_t;
+
 
 
 void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
