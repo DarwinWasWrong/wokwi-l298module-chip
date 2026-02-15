@@ -12,15 +12,14 @@
 // https://notisrac.github.io/FileToCArray/
 // for the conversion for images
 //
-// to be added
-// catch 0 and 255 in PWM
+
 
 
 
 #include "wokwi-api.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "graphics.h|
+#include "graphics.h"
 #define BOARD_HEIGHT 100
 #define BOARD_WIDTH 100
 
