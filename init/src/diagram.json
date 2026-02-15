@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "author": "Darwin WasWrong",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 240.6, "left": -0.6, "attrs": {} },
+    { "type": "chip-modulel298", "id": "chip1", "top": 164.22, "left": 331.2, "attrs": {} }
+  ],
+  "connections": [
+    [ "chip1:IN4", "uno:6", "green", [ "h0" ] ],
+    [ "chip1:IN3", "uno:7", "green", [ "h0" ] ],
+    [ "chip1:IN2", "uno:8", "green", [ "h0" ] ],
+    [ "chip1:IN1", "uno:9", "green", [ "h0" ] ],
+    [ "chip1:ENB", "uno:5", "green", [ "h0" ] ],
+    [ "chip1:ENA", "uno:10", "green", [ "h0" ] ],
+    [ "chip1:5V", "uno:5V", "red", [ "v0", "h72.44", "v278.4", "h-508.8" ] ],
+    [ "chip1:GND", "uno:GND.3", "black", [ "h82.04", "v307.2", "h-489.6", "v-9.6" ] ]
+  ],
+  "dependencies": {}
+}

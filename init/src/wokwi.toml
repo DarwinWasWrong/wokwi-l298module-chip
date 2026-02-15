@@ -1,0 +1,8 @@
+[wokwi]
+version = 1
+elf = 'test/blink/build/arduino.avr.uno/blink.ino.elf'
+firmware = 'test/blink/build/arduino.avr.uno/blink.ino.hex'
+
+[[chip]]
+name = 'modulel298'
+binary = 'dist/chip.wasm'
