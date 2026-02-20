@@ -51,7 +51,7 @@ jobs:
       - name: Test with Wokwi
         uses: wokwi/wokwi-ci-action@v1
         with:
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
+           token: ${{ secrets.GITHUB_TOKEN }}
           path: /  # directory with wokwi.toml, relative to repo's root
          
 
