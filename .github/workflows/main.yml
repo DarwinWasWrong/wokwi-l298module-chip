@@ -14,9 +14,9 @@ jobs:
       - name: Build chip
         uses: wokwi/wokwi-chip-clang-action@main
         with:
-          sources: "src/chip-modulel298.chip.c"  
+          sources: "src/main.c"
       - name: Copy chip.json
-        run: sudo cp src/chip-modulel298.chip.json dist
+        run: sudo cp chip.json dist
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v4
         with:
@@ -36,9 +36,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: chip
-          path: dist
+          path: chip
       - name: Create a zip archive
-        run: cd dist && zip -9 ../chip.zip chip.*
+        run: cd chip && zip -9 ../chip.zip chip.*
         env:
           ZIP_VERSION: ${{ github.ref_name }}
       - name: Upload release
@@ -47,7 +47,6 @@ jobs:
           artifacts: chip.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
-          allowUpdates: true
 
          
 
