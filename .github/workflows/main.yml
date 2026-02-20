@@ -36,9 +36,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: chip
-          path: chip
+          path: dist
       - name: Create a zip archive
-        run: cd chip && zip -9 ../chip.zip chip.*
+        run: cd dist && zip -9 ../chip.zip chip.*
         env:
           ZIP_VERSION: ${{ github.ref_name }}
       - name: Upload release
