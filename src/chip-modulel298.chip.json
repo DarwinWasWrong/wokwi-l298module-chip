@@ -16,7 +16,7 @@
   ],
   "controls": [
 
-     { "id": "use_PWM_ENA",
+     { "id": "usePWMenA",
       "label": "PWM USED ENA",
       "type": "range",
       "min": 0,
@@ -24,7 +24,7 @@
       "step": 1
      }
      ,
-     { "id": "use_PWM_ENB",
+     { "id": "usePWMenB",
       "label": "PWM USED ENB",
       "type": "range",
       "min": 0,
