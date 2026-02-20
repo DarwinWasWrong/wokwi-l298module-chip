@@ -1,4 +1,4 @@
-Start of a method of displaying L298 on wokwi.
+#Start of a method of displaying L298 on wokwi.
 The diagram.json must include the cihp as a part and the gitgub dependencies
 
  { "type": "chip-modulel298", "id": "chip1", "top": XX, "left": YY, "attrs": {} }
