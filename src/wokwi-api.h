@@ -70,7 +70,7 @@ typedef struct {
   uint32_t address;
   pin_t scl;
   pin_t sda;
-  bool (*connect)(void *user_data, uint32_t address, bool connect);
+  bool (*connect)(void *user_data, uint32_t address, bool read);
   uint8_t (*read)(void *user_data);
   bool (*write)(void *user_data, uint8_t data);
   void (*disconnect)(void *user_data);
@@ -135,8 +135,25 @@ static uint64_t get_sim_nanos(void) {
 
 typedef uint32_t buffer_t;
 extern __attribute__((import_name("framebufferInit"))) buffer_t framebuffer_init(uint32_t *pixel_width, uint32_t *pixel_height);
-extern __attribute__((import_name("bufferRead"))) void buffer_read(buffer_t buffer, uint32_t offset, uint8_t *data, uint8_t data_len);
-extern __attribute__((import_name("bufferWrite"))) void buffer_write(buffer_t buffer, uint32_t offset, uint8_t *data, uint8_t data_len);
+extern __attribute__((import_name("bufferRead"))) void buffer_read(buffer_t buffer, uint32_t offset, void *data, uint32_t data_len);
+extern __attribute__((import_name("bufferWrite"))) void buffer_write(buffer_t buffer, uint32_t offset, void *data, uint32_t data_len);
+
+// Experimental API - subject to change
+extern __attribute__((import_name("_symbolResolve"))) void* _symbol_resolve(char *symbol_name);
+extern __attribute__((import_name("_mcuReadMemory"))) bool _mcu_read_memory(const void *address, void *target, uint32_t size);
+extern __attribute__((import_name("_mcuReadUint32"))) uint32_t _mcu_read_uint32(const void *address);
+extern __attribute__((import_name("_mcuReadUint32"))) void* _mcu_read_ptr(const void *address);
+extern __attribute__((import_name("_mcuReadPC"))) uint32_t _mcu_read_pc();
+extern __attribute__((import_name("_mcuReadSP"))) uint32_t _mcu_read_sp();
+
+typedef struct {
+  void *user_data;
+  void (*callback)(void *user_data, uint32_t core, uint32_t sp);
+  uint32_t sp_min;
+  uint32_t sp_max;
+  uint32_t reserved[8];
+} sp_monitor_config_t;
+extern __attribute__((import_name("_mcuMonitorSP"))) uint32_t _mcu_monitor_sp(const sp_monitor_config_t *config);
 
 #ifdef __cplusplus
 }
