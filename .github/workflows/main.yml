@@ -45,7 +45,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: chip.zip
-          token: ${{ secrets.DAGITHUB }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           allowUpdates: true
 
