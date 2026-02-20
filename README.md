@@ -1,12 +1,14 @@
-#Start of a method of displaying L298 on wokwi.
-The diagram.json must include the cihp as a part and the gitgub dependencies
+## Start of a method of displaying L298 on wokwi.
 
- { "type": "chip-modulel298", "id": "chip1", "top": XX, "left": YY, "attrs": {} }
+** The diagram.json must include the cihp as a part and the gitgub dependencies **
 
- "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-l298module-chip@6.0.0" }
+> { "type": "chip-modulel298", "id": "chip1", "top": XX, "left": YY, "attrs": {} }
 
+> "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-l298module-chip@X.X.X" }
 
+where github:DarwinWasWrong/wokwi-l298module-chip@X.X.X    X.X.X is the release verion
 eg
+```
 {
   "version": 1,
   "author": "Darwin WasWrong",
@@ -25,3 +27,4 @@ eg
   ],
   "dependencies": { "chip-modulel298": "github:DarwinWasWrong/wokwi-l298module-chip@6.0.0" }
 }
+```
