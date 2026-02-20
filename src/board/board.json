@@ -4,7 +4,7 @@
       "width": 88.5,
       "height": 38,
 
- "chips": [{ "id": "chip", "type":"github:DarwinWasWrong/wokwi-l298module-chip@4.0.8" }],
+ "chips": [{ "id": "chip", "type":"github:DarwinWasWrong/wokwi-l298module-chip@5.0.0" }],
 
   "pins": [
     "ENA" : { "x": 4, "y": 10, "target": "chip:ENA" },
