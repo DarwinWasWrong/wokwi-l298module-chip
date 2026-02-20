@@ -13,18 +13,12 @@
 // for the conversion for images
 //
 
-
-
-
 #include "wokwi-api.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "graphics.h"
 #define BOARD_HEIGHT 100
 #define BOARD_WIDTH 100
-
-
-
 
 // the various states the channel can be in
 const char drive_state[][17]=
