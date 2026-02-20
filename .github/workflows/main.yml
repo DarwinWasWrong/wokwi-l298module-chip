@@ -45,14 +45,10 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: chip.zip
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
+          token: ${{ secrets.DAGITHUB }}
           generateReleaseNotes: true
           allowUpdates: true
-      - name: Test with Wokwi
-        uses: wokwi/wokwi-ci-action@v1
-        with:
-           token: ${{ secrets.DAGITHUB }}
-          path: /  # directory with wokwi.toml, relative to repo's root
+
          
 
 
