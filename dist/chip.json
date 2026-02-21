@@ -18,18 +18,17 @@
 
      { "id": "usePWMenA",
       "label": "PWM USED ENA",
-      "type": "range",
-      "min": 0,
-      "max": 1,
-      "step": 1
+      "type": "boolean",
+      "min": true,
+      "max": false
+     
      }
      ,
      { "id": "usePWMenB",
       "label": "PWM USED ENB",
-      "type": "range",
-      "min": 0,
-      "max": 1,
-      "step": 1
+      "type": "boolean",
+      "min": true,
+      "max": false
      }
   ],
     "display": {
