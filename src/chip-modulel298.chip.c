@@ -471,10 +471,6 @@ if (use_PWM_ENB )
 }
 
 
-
-
-
-
 void draw_state(chip_state_t *chip) {
   
   //turn off the two timers
@@ -548,15 +544,11 @@ void draw_state(chip_state_t *chip) {
 }
 
 
-
-
-
-
-
 // graphics for motor A
 void chip_timer_event_motorA(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
   draw_cog(chip, chip->motor_A_y,chip->motor_A_x,chip->motorAphase);
+  printf("chip->motorAphase %d chip->high_time_ENA %d \n",chip->motorAphase );
   if ( chip-> drive_A_state == 0 ) chip->motorAphase=chip->motorAphase - 1;
   if ( chip-> drive_A_state == 1) chip->motorAphase=chip->motorAphase + 1;
   if (chip->motorAphase < 0) chip->motorAphase =8;
@@ -578,20 +570,16 @@ void chip_timer_event_motorB(void *user_data) {
 // watch dog A
 void chip_timer_event_Awatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  printf("chip->low_time_ENA %d chip->high_time_ENA %d \n",chip->low_time_ENA ,chip->high_time_ENA );
+ // printf("chip->low_time_ENA %d chip->high_time_ENA %d \n",chip->low_time_ENA ,chip->high_time_ENA );
 
 }
 
 // watch dog A
 void chip_timer_event_Bwatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  printf("chip->low_time_ENB %d chip->high_time_ENB %d \n",chip->low_time_ENB ,chip->high_time_ENB );
+ // printf("chip->low_time_ENB %d chip->high_time_ENB %d \n",chip->low_time_ENB ,chip->high_time_ENB );
 
 }
-
-
-
-
 
 void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
   uint32_t offset = chip->fb_w * 4 * row;
