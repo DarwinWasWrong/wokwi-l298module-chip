@@ -16,9 +16,17 @@
 #include "wokwi-api.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "graphics.h"
+#include <graphics.h>
 #define BOARD_HEIGHT 100
 #define BOARD_WIDTH 100
+
+
+
+
+
+
+
+
 
 // the various states the channel can be in
 const char drive_state[][17]=
@@ -113,12 +121,12 @@ typedef struct {
   uint8_t  previous_drive_B_state;
   
   // motor graphics position
-  uint8_t motorAphase;
-  uint8_t motorBphase;
+  int8_t motorAphase;
+  int8_t motorBphase;
   uint8_t motor_A_y;
   uint8_t motor_A_x;
-  uint8_t motor_2_x;
   uint8_t motor_B_x;
+  uint8_t motor_B_y;
 
 // arrow graphics position
   uint8_t motor_1_2_arrow_y ;
@@ -133,7 +141,8 @@ typedef struct {
   uint8_t bar_left_x;
   uint8_t bar_right_x;
 
-
+  timer_t timer_motorA;
+  timer_t timer_motorB;
 } chip_state_t;
 
 
@@ -142,7 +151,7 @@ static void draw_state (chip_state_t *chip);
 static void draw_board(chip_state_t *chip, uint32_t x_start,  uint32_t y_start) ;
 static void draw_line(chip_state_t *chip, uint32_t row, rgba_t color);
 static void draw_pixel(chip_state_t *chip, uint32_t x,  uint32_t y,  rgba_t color) ;
-static void draw_cog(chip_state_t *chip, uint32_t x,  uint32_t y ,uint32_t phase);
+static void draw_cog(chip_state_t *chip, uint32_t x,  uint32_t y ,int8_t phase);
 
 static void draw_right_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe);
 static void draw_left_arrow(chip_state_t *chip, uint32_t x_start,  uint32_t y_start, uint8_t wipe);
@@ -196,15 +205,10 @@ void chip_init(void) {
  //
   printf( "ENA linked to 5v %d\n",chip->start_state_ENA);
   printf( "ENB linked to 5v %d\n",chip->start_state_ENB);
-
-
-  
+ 
   // if there is no link have to check for PWM or switching
   chip->use_PWM_ENA= !chip->start_state_ENA;
   chip->use_PWM_ENB= !chip->start_state_ENB;
-
-
-
 
   // pwm timings
   unsigned long  high_ENA;
@@ -216,13 +220,11 @@ void chip_init(void) {
   unsigned long  previous_high_ENB;
   unsigned long  previous_low_ENB;
 
-
-
-   unsigned long  high_time_ENA;
-   unsigned long  low_time_ENA;
+  unsigned long  high_time_ENA;
+  unsigned long  low_time_ENA;
  
-   unsigned long  high_time_ENB;
-   unsigned long  low_time_ENB;
+  unsigned long  high_time_ENB;
+  unsigned long  low_time_ENB;
   
   // Display values
   chip->speed_percent_A=0;
@@ -248,20 +250,20 @@ void chip_init(void) {
   // positioning
   chip->motor_A_y=20;
   chip->motor_A_x=113;
-  chip->motor_2_x=20;
-  chip->motor_B_x=187;
+  chip->motor_B_x=20;
+  chip->motor_B_y=187;
   // arrow and speed base position
   chip->motor_1_2_arrow_y = 70;
   // Motor A arrow positions  relative to motor A position
   chip->motorA_right_arrow_x =chip->motor_A_x + 40;
   chip->motorA_left_arrow_x = chip->motor_A_x  ;
   // Motor B arrow positions  relative to motor B position
-  chip->motorB_right_arrow_x = chip->motor_B_x +  40;
-  chip->motorB_left_arrow_x = chip->motor_B_x;
+  chip->motorB_right_arrow_x = chip->motor_B_y +  40;
+  chip->motorB_left_arrow_x = chip->motor_B_y;
   // bars position relative to motor
   chip-> bar_1_2_y=  chip->motor_1_2_arrow_y + 20;
   chip-> bar_left_x=chip->motor_A_x ;
-  chip-> bar_right_x=chip->motor_B_x ;
+  chip-> bar_right_x=chip->motor_B_y ;
    printf("Framebuffer: fb_w=%d, fb_h=%d\n", chip->fb_w, chip->fb_h);
 //  box around displays
    draw_rectangle(chip, 101,10,75,100,chip->green ,0);
@@ -283,7 +285,7 @@ void chip_init(void) {
   //Draw the cogs
   printf("Draw the cogs ...\n");
   draw_cog(chip, chip->motor_A_y,chip->motor_A_x,0);
-  draw_cog(chip, chip->motor_A_y,chip->motor_B_x,0);
+  draw_cog(chip, chip->motor_A_y,chip->motor_B_y,0);
 
 
 
@@ -302,20 +304,19 @@ const timer_config_t timer_config_Bwatchdog = {
   timer_start(timer_Bwatchdog,100000, true);
 
 
-
 const timer_config_t timer_config_motorA = {
     .callback = chip_timer_event_motorA,
     .user_data = chip,
   };
-  timer_t timer_motorA = timer_init(&timer_config_motorA);
-  timer_start(timer_motorA,100000, true);
+  chip->timer_motorA = timer_init(&timer_config_motorA);
+ // timer_start(chip->timer_motorA,20000, true);
 
 const timer_config_t timer_config_motorB = {
     .callback = chip_timer_event_motorB,
     .user_data = chip,
   };
-  timer_t timer_motorB = timer_init(&timer_config_motorB);
-  timer_start(timer_motorB, 10000, true);
+  chip->timer_motorB = timer_init(&timer_config_motorB);
+ // timer_start(timer_motorB, 20000, true);
 
 
 // config for PWM A watch
@@ -352,18 +353,13 @@ const pin_watch_config_t watch_config_PWM_B = {
   pin_watch(chip->pin_IN4, &watch_config);
 
 
-
-
-
 }
 
 // PWM A pin change function for watch
 void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENA = pin_read(chip->pin_ENA);
-
-// channel A using PWM
-
+  // channel A using PWM
   if (ENA){
     chip->high_ENA = get_sim_nanos();
     chip->low_time_ENA = chip->high_ENA - chip->low_ENA;
@@ -373,33 +369,23 @@ void chip_pin_change_PWM_A(void *user_data, pin_t pin, uint32_t value) {
     chip->low_ENA = get_sim_nanos();
     chip->high_time_ENA = chip->low_ENA - chip->high_ENA ;
   }
-
   float total_ENA = chip->high_time_ENA + chip->low_time_ENA;
-  
   int duty_cycle_ENA = (chip->high_time_ENA / total_ENA) * 100.0;
   chip->speed_percent_A=duty_cycle_ENA;
-
   // if a change then redisplay
   if ( chip->previous_speed_percent_A != chip->speed_percent_A)
   {
+   // printf("chip->previous_speed_percent_A %d chip->speed_percent_A %d \n",chip->previous_speed_percent_A ,chip->speed_percent_A );
    draw_state(chip);
    chip->previous_speed_percent_A = chip->speed_percent_A;
   }
-
-
-
-  
 }
 
 // PWM B pin change function for watch
 void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
-  
   chip_state_t *chip = (chip_state_t*)user_data;
   uint8_t ENB = pin_read(chip->pin_ENB);
-  
-
-// channel B using PWM
-
+  // channel B using PWM
   if (ENB){
     chip->high_ENB= get_sim_nanos();
     chip->low_time_ENB= chip->high_ENB- chip->low_ENB;
@@ -410,17 +396,14 @@ void chip_pin_change_PWM_B(void *user_data, pin_t pin, uint32_t value) {
   float total = chip->high_time_ENB+ chip->low_time_ENB;
   int duty_cycle_ENB = (chip->high_time_ENB / total) * 100.0;
   chip->speed_percent_B=duty_cycle_ENB;
- 
-
- // if a change then redisplay
- if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
+  // if a change then redisplay
+  if ( chip->previous_speed_percent_B != chip->speed_percent_B  )
   {
+   //printf("chip->previous_speed_percent_B %d chip->speed_percent_B %d \n",chip->previous_speed_percent_B ,chip->speed_percent_B );
    draw_state(chip);
    chip->previous_speed_percent_B = chip->speed_percent_B;
   }
- 
- 
-}
+ }
 
 
 void chip_pin_change(void *user_data, pin_t pin, uint32_t value) {
@@ -474,8 +457,10 @@ if (use_PWM_ENB )
 void draw_state(chip_state_t *chip) {
   
   //turn off the two timers
-  timer_stop(0);
-  timer_stop(1);
+  timer_stop(chip->timer_motorA);
+  timer_stop(chip->timer_motorB);
+
+
 
 // backwards
  if (chip-> drive_A_state == 0) 
@@ -501,6 +486,8 @@ void draw_state(chip_state_t *chip) {
  }
 
 
+   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
+   draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 
 
  if (chip-> drive_B_state == 0)
@@ -509,38 +496,29 @@ void draw_state(chip_state_t *chip) {
     draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,0);
     draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_left_arrow_x,1);
  }
-
-
  if (chip-> drive_B_state == 1) 
  {
   // remove right - place left
   draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1);
   draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_left_arrow_x,0);
  }
-
  if (chip-> drive_B_state == 2 || chip-> drive_B_state == 3)
  {
   // remove both arrows
   draw_right_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1);
   draw_left_arrow(chip,chip->motor_1_2_arrow_y ,chip->motorB_right_arrow_x,1); 
  }
-
-
-
-
   if (chip-> drive_A_state == 0 || chip-> drive_A_state == 1)
   {
-   timer_start(0, (100 - chip->speed_percent_A) *1000 * 3 , 1);
+  timer_start(chip->timer_motorA, (100 - chip->speed_percent_A) * 2400 , true);
+ 
   }
+
    if (chip-> drive_B_state == 0 || chip-> drive_B_state == 1)
    {
-   timer_start(1, (100 - chip->speed_percent_B) *1000 * 3, 1);
+   timer_start(chip->timer_motorB, (100 - chip->speed_percent_B) * 2400, true);
    }
 
-    printf( "   chip->speed_percent_A %d chip->speed_percent_b  %d\n",chip->speed_percent_A,chip->speed_percent_B);
-  
-   draw_speed(chip, chip-> bar_left_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_A);
-   draw_speed(chip, chip-> bar_right_x,chip-> bar_1_2_y,50,15, chip-> purple  ,chip->speed_percent_B);
 }
 
 
@@ -548,8 +526,7 @@ void draw_state(chip_state_t *chip) {
 void chip_timer_event_motorA(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
   draw_cog(chip, chip->motor_A_y,chip->motor_A_x,chip->motorAphase);
-  printf("chip->motorAphase %d chip->high_time_ENA %d \n",chip->motorAphase );
-  if ( chip-> drive_A_state == 0 ) chip->motorAphase=chip->motorAphase - 1;
+  if ( chip-> drive_A_state == 0 )   chip->motorAphase=chip->motorAphase - 1;
   if ( chip-> drive_A_state == 1) chip->motorAphase=chip->motorAphase + 1;
   if (chip->motorAphase < 0) chip->motorAphase =8;
   if (chip->motorAphase >8) chip->motorAphase = 0;
@@ -559,27 +536,22 @@ void chip_timer_event_motorA(void *user_data) {
 // graphics for motor B
 void chip_timer_event_motorB(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
-  draw_cog(chip, chip->motor_2_x,chip->motor_B_x,chip->motorBphase);
+  draw_cog(chip, chip->motor_B_x,chip->motor_B_y,chip->motorBphase);
   if ( chip-> drive_B_state == 0 ) chip->motorBphase=chip->motorBphase - 1;
   if ( chip-> drive_B_state == 1) chip->motorBphase=chip->motorBphase + 1;
   if (chip->motorBphase < 0) chip->motorBphase = 8;
   if (chip->motorBphase > 8) chip->motorBphase = 0;
-
 }
 
 // watch dog A
 void chip_timer_event_Awatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
- // printf("chip->low_time_ENA %d chip->high_time_ENA %d \n",chip->low_time_ENA ,chip->high_time_ENA );
+ }
 
-}
-
-// watch dog A
+// watch dog B
 void chip_timer_event_Bwatchdog(void *user_data) {
   chip_state_t *chip = (chip_state_t*)user_data;
- // printf("chip->low_time_ENB %d chip->high_time_ENB %d \n",chip->low_time_ENB ,chip->high_time_ENB );
-
-}
+ }
 
 void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
   uint32_t offset = chip->fb_w * 4 * row;
@@ -597,10 +569,9 @@ void draw_line(chip_state_t *chip, uint32_t row, rgba_t color) {
 
 }
 
-void draw_cog(chip_state_t *chip, uint32_t x_start,  uint32_t y_start,uint32_t phase) {
+void draw_cog(chip_state_t *chip, uint32_t x_start,  uint32_t y_start,int8_t phase) {
 // size of our graphic
 uint8_t square_size = 50;
-
 uint32_t pixel_spot_data = 0;
 for (int x=x_start;x < square_size + x_start; x++)
    {
@@ -690,9 +661,6 @@ void draw_speed(chip_state_t *chip, uint32_t x_start, uint32_t y_start, uint32_t
     
     }
  }
-
-
-
     rgba_t color2 = chip->white;
     percent_up = percent_up /2;
     //printf(" x_len %d       percent_up %d\n",x_len, percent_up);
@@ -758,6 +726,7 @@ if(wipe == 1)
     }
    }
 }  
+
 
 
 
